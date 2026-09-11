@@ -1,0 +1,25 @@
+# One-command local run: `docker compose up`
+#
+# Builds the image from the Dockerfile, wires the environment variables the
+# application reads, publishes the API port and lets Compose track the
+# container health through /health.
+services:
+  api:
+    build:
+      context: .
+    image: task-api:local
+    ports:
+      # Host port (API_PORT, default 3000) → container port 3000.
+      - "${API_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true

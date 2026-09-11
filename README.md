@@ -75,11 +75,27 @@ Properties of the runtime image:
 
 ## Docker Compose
 
-Students must create:
-
 ```bash
 docker compose up
 ```
+
+[`compose.yml`](compose.yml) builds the image, sets `NODE_ENV` and `PORT`,
+publishes the API on the host and reuses the `/health` endpoint as the
+container health check. `docker compose ps` shows `(healthy)` once the API
+answers.
+
+| Variable   | Default      | Effect                                   |
+| ---------- | ------------ | ---------------------------------------- |
+| `API_PORT` | `3000`       | Host port mapped to the container's 3000 |
+| `NODE_ENV` | `production` | Passed to the application                |
+
+```bash
+API_PORT=8080 docker compose up      # API on http://localhost:8080
+docker compose down                  # stop and remove the container
+```
+
+The stack has a single service: the store is in memory, so there is no
+database to run alongside it.
 
 ## GitHub Actions
 
