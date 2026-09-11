@@ -23,7 +23,13 @@ RUN npm ci --omit=dev \
 # ---------------------------------------------------------------------------
 FROM node:${NODE_VERSION}-alpine AS runtime
 
-RUN apk add --no-cache tini
+# Upgrade the OS packages first: the base image lags behind Alpine's security
+# fixes (Trivy flagged fixable OpenSSL CVEs), then add tini.
+# npm, npx and corepack are build-time tools: the container starts Node
+# directly, so they are removed along with the vulnerable packages they bundle.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache tini \
+    && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 ENV NODE_ENV=production \
     PORT=3000

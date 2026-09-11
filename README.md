@@ -151,6 +151,56 @@ GHCR. Authentication uses the run's own short-lived `GITHUB_TOKEN`: no
 personal access token is stored in the repository or its secrets. The
 verification job only gets `packages: read`, because pulling is all it does.
 
+## Security scanning
+
+Every image build is scanned with [Trivy](https://github.com/aquasecurity/trivy)
+before anything is published, and the published `latest` image is re-scanned
+every Monday by [`security-scan.yml`](.github/workflows/security-scan.yml)
+(which also runs `npm audit`). Reports are uploaded to the repository's
+**Security → Code scanning** tab; the table output is visible in the
+workflow logs.
+
+### Policy
+
+| Finding                                       | Effect                                   |
+| --------------------------------------------- | ---------------------------------------- |
+| CRITICAL or HIGH **with a fix available**     | pipeline fails, image is **not** published |
+| CRITICAL or HIGH without a fix (`unfixed`)    | reported, does not block                 |
+| MEDIUM and LOW                                | reported, does not block                 |
+
+Why this line: blocking on a vulnerability nobody can fix yet would only
+freeze delivery, while a fixable CRITICAL/HIGH is a one-line change (bump the
+base image, `apk upgrade`, bump a dependency) that must happen before the
+image reaches the registry.
+
+### When the scan fails
+
+- **On a pull request** — the author fixes it in the same PR (upgrade the base
+  image tag, bump the dependency, or drop the package if it is not needed at
+  runtime). The reviewer checks the fix, not just the green check.
+- **On the weekly scan** — the job fails and GitHub notifies the team. Open an
+  issue with the `security` label, fix it through the normal PR flow and cut a
+  patch release so `latest` is clean again.
+- **Exception** — if a finding cannot be fixed and is demonstrably not
+  exploitable here, add the CVE id to a `.trivyignore` file **in a PR** with
+  the justification and an expiry date in the comment. No exception is
+  granted outside a reviewed PR.
+
+### What the first scan found
+
+The initial `node:20-alpine` image reported 4 HIGH OpenSSL CVEs (fixed in
+Alpine but not yet in the base image) and 20 HIGH/CRITICAL findings in the
+packages bundled with the image's `npm`. The Dockerfile now runs
+`apk upgrade` and removes `npm`, `npx` and `corepack` from the runtime stage,
+which the container never uses. The image scans clean for fixable
+CRITICAL/HIGH vulnerabilities.
+
+### SBOM
+
+For every published image the workflow generates a CycloneDX Software Bill
+of Materials (`sbom.cdx.json`), attached to the workflow run as an artifact
+for 90 days.
+
 ## GitHub Actions
 
 The final repository must contain workflows for:
