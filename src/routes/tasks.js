@@ -1,15 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const { validateTask } = require('../middleware/validate'); // Importation du middleware
 
-const store = require('../data/store'); // à adapter au vrai stockage de l'équipe
+const store = require('../data/store'); // Couche d'accès aux données
 
 const VALID_STATUS = ['todo', 'in-progress', 'done'];
 
-// Logique pure de filtrage — exportée pour les tests de Shamina
 function applyFilters(tasks, { status, search }) {
   let result = tasks;
 
-  // Feature A : filtrage par statut
   if (status) {
     if (!VALID_STATUS.includes(status)) {
       const err = new Error('Status must be one of: todo, in-progress, done');
@@ -19,7 +18,6 @@ function applyFilters(tasks, { status, search }) {
     result = result.filter(t => t.status === status);
   }
 
-  // Feature B : recherche insensible à la casse sur title OU description
   if (search) {
     const q = search.toLowerCase();
     result = result.filter(t =>
@@ -31,7 +29,6 @@ function applyFilters(tasks, { status, search }) {
   return result;
 }
 
-// GET /tasks?status=&search=  → renvoie { data: [...] }
 router.get('/', (req, res) => {
   try {
     const data = applyFilters(store.getAll(), req.query);
@@ -43,7 +40,7 @@ router.get('/', (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-// GET /tasks/:id → l'objet task seul, ou 404
+
 router.get('/:id', (req, res) => {
   const task = store.getById(req.params.id);
   if (!task) {
@@ -51,6 +48,17 @@ router.get('/:id', (req, res) => {
   }
   res.status(200).json(task);
 });
+
+// Nouvelle route POST sécurisée par validateTask
+router.post('/', validateTask, (req, res) => {
+  const { title, description, status = 'todo' } = req.body;
+
+  const newTask = store.create({ title, description, status });
+  res.status(201).json(newTask);
+
+
+});
+
 module.exports = router;
 module.exports.applyFilters = applyFilters;
 module.exports.VALID_STATUS = VALID_STATUS;
