@@ -47,14 +47,31 @@ Students must implement additional functionality from `CHALLENGE.md`.
 
 ## Docker
 
-Students must create a production-ready Docker image.
-
-Expected commands:
-
 ```bash
 docker build -t task-api .
 docker run -p 3000:3000 task-api
 ```
+
+The API is then available on <http://localhost:3000>. Override the port or
+the environment with `-e PORT=8080 -p 8080:8080` / `-e NODE_ENV=staging`.
+
+The [`Dockerfile`](Dockerfile) is a multi-stage build:
+
+| Stage     | Base               | Purpose                                                    |
+| --------- | ------------------ | ---------------------------------------------------------- |
+| `deps`    | `node:20-alpine`   | `npm ci --omit=dev` from the lockfile: production deps only |
+| `runtime` | `node:20-alpine`   | copies `node_modules` and `src/`, nothing else              |
+
+Properties of the runtime image:
+
+- runs as the unprivileged `node` user (uid 1000), not root;
+- contains no dev dependencies, tests, git history or lint configuration
+  (see [`.dockerignore`](.dockerignore));
+- `tini` is PID 1 so `docker stop` delivers `SIGTERM` to Node immediately
+  instead of waiting for the 10 s kill timeout;
+- declares `EXPOSE 3000` and a `HEALTHCHECK` that calls `GET /health` every
+  30 s (`docker inspect --format '{{.State.Health.Status}}' <container>`
+  shows `healthy`).
 
 ## Docker Compose
 

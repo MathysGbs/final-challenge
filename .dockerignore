@@ -1,0 +1,17 @@
+# Anything not needed at runtime stays out of the build context: smaller
+# context, faster builds, and no chance of leaking local files into the image.
+.git
+.github
+node_modules
+npm-debug.log*
+coverage
+tests
+scripts
+*.md
+.env
+.env.*
+.editorconfig
+eslint.config.js
+Dockerfile
+.dockerignore
+compose.yml
