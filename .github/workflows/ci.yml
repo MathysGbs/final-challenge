@@ -6,13 +6,26 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Un nouveau push sur la même branche/PR annule le run encore en cours pour
+# le commit précédent : son résultat serait obsolète de toute façon.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Les quality gates ne font que lire le dépôt.
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
+
     strategy:
+      # Un échec sur une version de Node ne doit pas masquer le résultat des autres.
+      fail-fast: false
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        # Node 20 = version de l'image Docker, 22 = LTS courante. Node 18 est en fin de vie.
+        node-version: [20.x, 22.x]
 
     steps:
     - name: Checkout du dépôt
@@ -32,3 +45,6 @@ jobs:
 
     - name: Exécution des tests unitaires
       run: npm test
+
+    - name: Vérification de build (l'application démarre et /health répond)
+      run: npm run build
