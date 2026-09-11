@@ -1,1 +1,17 @@
+# Dependencies
 node_modules/
+
+# Environment files — never commit secrets (see README > Configuration)
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+npm-debug.log*
+coverage/
+.nyc_output/
+
+# OS / editor noise
+.DS_Store
+.idea/
+.vscode/
