@@ -1,0 +1,42 @@
+name: Bug Report
+description: Signaler un comportement inattendu ou un dysfonctionnement
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du bug
+      description: Expliquez le problème rencontré avec un maximum de précision.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      description: Indiquez la marche à suivre exacte pour déclencher le bug.
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportement attendu
+      description: Que devait-il se passer d'un point de vue fonctionnel ou technique ?
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environnement technique
+      description: Précisez l'OS, la version des outils (ex: Node.js, compilateur C/C++, Unity) et tout autre détail pertinent.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs et traces d'erreur
+      description: Collez ici les messages d'erreur ou les extraits de la console.

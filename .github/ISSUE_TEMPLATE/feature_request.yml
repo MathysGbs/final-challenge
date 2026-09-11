@@ -1,0 +1,29 @@
+name: Feature Request
+description: Suggérer une nouvelle fonctionnalité ou une évolution
+title: "[FEAT] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du besoin
+      description: Une description claire, concise et structurée de la fonctionnalité souhaitée.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposée
+      description: Décrivez précisément comment vous envisagez l'implémentation technique.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considérées
+      description: Avez-vous pensé à d'autres approches ou architectures logicielles ?
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte supplémentaire
+      description: Ajoutez toute information utile (captures d'écran, diagrammes, etc.).
