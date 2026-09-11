@@ -22,8 +22,9 @@ jobs:
     name: Build image${{ github.event_name != 'pull_request' && ' & publish to GHCR' || '' }}
     runs-on: ubuntu-latest
     permissions:
-      contents: read     # checkout the sources
-      packages: write    # push the image to ghcr.io (no-op on pull requests, nothing is pushed)
+      contents: read          # checkout the sources
+      packages: write         # push the image to ghcr.io (no-op on pull requests, nothing is pushed)
+      security-events: write  # upload the Trivy report to the repository's Security tab
     outputs:
       image: ${{ steps.published.outputs.image }}
     steps:
@@ -96,6 +97,54 @@ jobs:
             exit 1
           fi
           docker rm -f smoke >/dev/null
+
+      # --- Security scanning (policy: README > Security scanning) ---------
+      # 1. Full report, all severities, uploaded to the Security tab. Never
+      #    fails the build on its own: it is there to be read.
+      - name: Scan image with Trivy (report)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          scanners: vuln
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-image.sarif
+
+      - name: Upload scan report to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true   # informational; the gate is the next step
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+      # 2. The gate. A CRITICAL or HIGH vulnerability that has a fix available
+      #    fails the job here, before anything is pushed to the registry.
+      - name: Scan image with Trivy (gate on fixable CRITICAL/HIGH)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      # Software Bill of Materials of the image that is about to be published.
+      - name: Generate SBOM (CycloneDX)
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          format: cyclonedx
+          output: sbom.cdx.json
+
+      - name: Upload SBOM
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.cdx.json
+          retention-days: 90
 
       # Same build (served from the cache), this time exported to the registry.
       - name: Push image to GHCR
