@@ -43,3 +43,53 @@ test('GET /tasks/:id returns 404 for an unknown task', async () => {
   assert.equal(response.status, 404);
   assert.equal(body.error, 'Task not found');
 });
+
+test('POST /tasks creates a task on valid input', async () => {
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({ title: 'New task' })
+  });
+
+  assert.equal(response.status, 201);
+  assert.equal(body.title, 'New task');
+});
+
+test('POST /tasks returns 400 when title is missing', async () => {
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({ description: 'no title' })
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error, 'Title is required');
+});
+
+test('POST /tasks returns 400 when status is invalid', async () => {
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({ title: 'x', status: 'wrong' })
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error, 'Status must be one of: todo, in-progress, done');
+});
+
+test('POST /tasks returns 400 when title is too long', async () => {
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({ title: 'a'.repeat(201) })
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error, 'Title must be at most 200 characters');
+});
+
+test('POST /tasks returns 400 when body is malformed', async () => {
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify(['not', 'an', 'object'])
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error, 'Invalid request body');
+});
