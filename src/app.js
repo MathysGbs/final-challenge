@@ -1,4 +1,5 @@
 const express = require('express');
+const { validateTask } = require('./middleware/validate');
 
 const app = express();
 app.use(express.json());
@@ -44,7 +45,7 @@ app.get('/tasks/:id', (req, res) => {
   return res.json(task);
 });
 
-app.post('/tasks', (req, res) => {
+app.post('/tasks', validateTask, (req, res) => {
   const { title, description, status = 'todo' } = req.body;
 
   const task = {
