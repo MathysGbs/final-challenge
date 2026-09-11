@@ -1,70 +1,25 @@
 const express = require('express');
-const { validateTask } = require('./middleware/validate');
+const config = require('./config');
+const tasksRouter = require('./routes/tasks');
 
 const app = express();
 app.use(express.json());
 
-let tasks = [
-  {
-    id: 1,
-    title: 'Prepare GitHub workshop',
-    description: 'Finish the slides',
-    status: 'todo'
-  },
-  {
-    id: 2,
-    title: 'Write CI workflow',
-    description: 'Configure GitHub Actions',
-    status: 'in-progress'
-  },
-  {
-    id: 3,
-    title: 'Review Pull Request',
-    description: 'Review teammate changes',
-    status: 'done'
-  }
-];
+app.use('/tasks', tasksRouter);
 
+// GET /health — toujours 200
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok'
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    env: config.env
   });
-});
-
-app.get('/tasks', (req, res) => {
-  res.json(tasks);
-});
-
-app.get('/tasks/:id', (req, res) => {
-  const task = tasks.find((item) => item.id === Number(req.params.id));
-
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
-
-  return res.json(task);
-});
-
-app.post('/tasks', validateTask, (req, res) => {
-  const { title, description, status = 'todo' } = req.body;
-
-  const task = {
-    id: tasks.length ? Math.max(...tasks.map((item) => item.id)) + 1 : 1,
-    title,
-    description,
-    status
-  };
-
-  tasks.push(task);
-  return res.status(201).json(task);
 });
 
 if (require.main === module) {
-  const port = process.env.PORT || 3000;
-
-  app.listen(port, () => {
-    console.log(`Task API listening on port ${port}`);
-  });
+  app.listen(config.port, () =>
+    console.log(`Task API listening on ${config.port} (${config.env})`)
+  );
 }
 
 module.exports = { app };

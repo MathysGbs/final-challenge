@@ -33,8 +33,8 @@ test('GET /tasks returns tasks', async () => {
   const { response, body } = await request('/tasks');
 
   assert.equal(response.status, 200);
-  assert.ok(Array.isArray(body));
-  assert.ok(body.length > 0);
+  assert.ok(Array.isArray(body.data));
+  assert.ok(body.data.length > 0);
 });
 
 test('GET /tasks/:id returns 404 for an unknown task', async () => {
